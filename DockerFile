@@ -1,0 +1,55 @@
+# Dockerfile.jenkins-agent
+
+# Choose a base image with the .NET SDK.
+# This includes the dotnet runtime and SDK.
+# You can change '8.0' to '6.0', '3.1', etc., based on your project's needs.
+FROM mcr.microsoft.com/dotnet/sdk:6.0
+
+# Set environment variables for non-interactive installations
+ENV DEBIAN_FRONTEND=noninteractive \
+    DOCKER_CLI_VERSION=26.1.3 
+
+# Install common tools (git, curl, wget, gnupg for package signing)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    wget \
+    gnupg \
+    apt-transport-https \
+    ca-certificates \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI (client)
+# This allows the container to talk to a Docker daemon (e.g., on the host)
+# Add Docker's official GPG key
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Add the Docker apt repository
+RUN echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install the Docker CLI client
+# We only need 'docker-ce-cli' to interact with the host's daemon via socket mount
+RUN apt-get update && apt-get install -y --no-install-recommends docker-ce-cli=${DOCKER_CLI_VERSION}-* \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user for security (optional but good practice)
+# Jenkins agent often runs as 'jenkins' user by convention
+ARG AGENT_UID=1001
+ARG AGENT_GID=1001
+RUN groupadd -g ${AGENT_GID} jenkins && \
+    useradd -u ${AGENT_UID} -g jenkins -m jenkins && \
+    chown -R jenkins:jenkins /home/jenkins
+
+# Set the user for subsequent commands
+USER jenkins
+
+# Set the working directory for this user
+WORKDIR /home/jenkins/agent
+
+# Default command to keep the container running if it's used as a permanent agent
+# You can change this if you use it only for build steps.
+CMD ["bash"] # Or often "sleep infinity" for a persistent agent base
