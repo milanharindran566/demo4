@@ -1,6 +1,13 @@
-libary 
-    identifier: 'https://github.com/milanharindran566/shared-jenkins-vars.git@main'
-    retriver: modernSCM($class: 'GitSCMSource', 
-    remote: 'https://github.com/milanharindran566/shared-jenkins-vars.git'])
+library(
+    // Identifier: Give your dynamically loaded library a name and version.
+    // This is how you'll refer to it if you use @Library annotation later.
+    identifier: 'my-dynamic-shared-library@main', // Choose a unique name, e.g., 'my-shared-vars@main'
+    // Retriever: How Jenkins should fetch the library code.
+    retriever: modernSCM([
+        $class: 'GitSCMSource', // Specifies it's a Git source
+        remote: 'https://github.com/milanharindran566/shared-jenkins-vars.git', // The Git repository URL
+        // credentialsId: 'your-git-credentials-id' // <-- Add this line if your repo is private and needs credentials
+    ])
+)
 
 samplePipeline()
