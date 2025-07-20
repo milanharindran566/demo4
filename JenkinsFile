@@ -1,0 +1,6 @@
+libary 
+    identifier: 'https://github.com/milanharindran566/shared-jenkins-vars.git@main'
+    retriver: modernSCM($class: 'GitSCMSource', 
+    remote: 'https://github.com/milanharindran566/shared-jenkins-vars.git'])
+
+samplePipeline()
